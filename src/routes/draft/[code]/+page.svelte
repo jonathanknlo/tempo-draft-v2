@@ -211,12 +211,11 @@
         .update({ is_first_picker: false })
         .eq('id', loser.id);
       
-      // Update room with first turn
+      // Update room to drafting status
       await supabase
         .from('rooms')
         .update({
-          status: 'drafting',
-          current_turn: winner.id
+          status: 'drafting'
         })
         .eq('id', room.id);
       

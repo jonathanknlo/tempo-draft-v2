@@ -6,9 +6,11 @@ export interface Database {
           id: string;
           code: string;
           status: 'waiting' | 'coin_toss' | 'drafting' | 'complete';
-          current_turn: string | null;
-          turn_number: number;
-          total_turns: number;
+          player1_name: string | null;
+          player2_name: string | null;
+          first_picker: string | null;
+          current_pick: number;
+          total_picks: number;
           created_at: string;
           updated_at: string;
           expires_at: string;
@@ -17,9 +19,11 @@ export interface Database {
           id?: string;
           code: string;
           status?: 'waiting' | 'coin_toss' | 'drafting' | 'complete';
-          current_turn?: string | null;
-          turn_number?: number;
-          total_turns?: number;
+          player1_name?: string | null;
+          player2_name?: string | null;
+          first_picker?: string | null;
+          current_pick?: number;
+          total_picks?: number;
           created_at?: string;
           updated_at?: string;
           expires_at?: string;
@@ -28,9 +32,11 @@ export interface Database {
           id?: string;
           code?: string;
           status?: 'waiting' | 'coin_toss' | 'drafting' | 'complete';
-          current_turn?: string | null;
-          turn_number?: number;
-          total_turns?: number;
+          player1_name?: string | null;
+          player2_name?: string | null;
+          first_picker?: string | null;
+          current_pick?: number;
+          total_picks?: number;
           created_at?: string;
           updated_at?: string;
           expires_at?: string;
@@ -72,6 +78,9 @@ export interface Database {
           game_time: string;
           is_marquee: boolean;
           is_family: boolean;
+          picked_by: string | null;
+          picked_at: string | null;
+          pick_number: number | null;
           created_at: string;
         };
         Insert: {
@@ -83,6 +92,9 @@ export interface Database {
           game_time: string;
           is_marquee?: boolean;
           is_family?: boolean;
+          picked_by?: string | null;
+          picked_at?: string | null;
+          pick_number?: number | null;
           created_at?: string;
         };
         Update: {
@@ -94,6 +106,9 @@ export interface Database {
           game_time?: string;
           is_marquee?: boolean;
           is_family?: boolean;
+          picked_by?: string | null;
+          picked_at?: string | null;
+          pick_number?: number | null;
           created_at?: string;
         };
       };

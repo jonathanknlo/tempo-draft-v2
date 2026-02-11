@@ -3,7 +3,7 @@ import { supabaseServer } from '$lib/supabase/server';
 import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
 import { validatePlayerName } from '$lib/utils/validation';
 import { seasonGames } from '$lib/data/games';
-import { redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
   createRoom: async ({ request, cookies }) => {
@@ -13,7 +13,7 @@ export const actions: Actions = {
     // Validate player name
     const validation = validatePlayerName(playerName);
     if (!validation.valid) {
-      return { success: false, error: validation.error };
+      return fail(400, { error: validation.error, playerName });
     }
     
     // Generate room code (with collision handling)
@@ -36,7 +36,7 @@ export const actions: Actions = {
     } while (existingRoom && attempts < 3);
     
     if (existingRoom) {
-      return { success: false, error: 'Failed to create room. Please try again.' };
+      return fail(500, { error: 'Failed to create room. Please try again.', playerName });
     }
     
     // Create room (expires in 1 hour - CRITICAL FIX #1)
@@ -54,7 +54,7 @@ export const actions: Actions = {
     
     if (roomError || !room) {
       console.error('Room creation error:', roomError);
-      return { success: false, error: 'Failed to create room. Please try again.' };
+      return fail(500, { error: 'Failed to create room. Please try again.', playerName });
     }
     
     // Generate session ID
@@ -73,7 +73,7 @@ export const actions: Actions = {
     
     if (playerError || !player) {
       console.error('Player creation error:', playerError);
-      return { success: false, error: 'Failed to create player. Please try again.' };
+      return fail(500, { error: 'Failed to create player. Please try again.', playerName });
     }
     
     // Create games for this room

@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { enhance } from '$app/forms';
   import { Flame } from 'lucide-svelte';
-  import { writable } from 'svelte/store';
   
-  let error = writable('');
-  let loading = writable(false);
+  // Get form result from server
+  export let form;
 </script>
 
 <svelte:head>
@@ -30,21 +28,7 @@
     <form 
       class="landing__form" 
       method="POST" 
-      action="?/createRoom" 
-      use:enhance={() => {
-        $loading = true;
-        $error = '';
-        
-        return async ({ result, update }) => {
-          $loading = false;
-          
-          if (result.type === 'failure') {
-            $error = result.data?.error || 'Something went wrong. Please try again.';
-          } else if (result.type === 'success') {
-            await update();
-          }
-        };
-      }}
+      action="?/createRoom"
     >
       <div class="landing__input-group">
         <label for="playerName" class="landing__label">Enter your name to start</label>
@@ -56,18 +40,18 @@
           maxlength="30"
           required
           class="landing__input"
-          disabled={$loading}
+          value={form?.playerName || ''}
         />
       </div>
       
-      {#if $error}
+      {#if form?.error}
         <div class="error-message">
-          {$error}
+          {form.error}
         </div>
       {/if}
       
-      <button type="submit" class="landing__cta" disabled={$loading}>
-        {$loading ? 'CREATING...' : 'CREATE DRAFT ROOM'}
+      <button type="submit" class="landing__cta">
+        CREATE DRAFT ROOM
       </button>
     </form>
     
@@ -179,11 +163,6 @@
     box-shadow: inset 0 0 0 2px var(--c-accent);
   }
   
-  .landing__input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
   .error-message {
     background: #ff4444;
     color: white;
@@ -208,19 +187,14 @@
     transition: all var(--t-fast);
   }
   
-  .landing__cta:hover:not(:disabled) {
+  .landing__cta:hover {
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0 var(--c-text);
   }
   
-  .landing__cta:active:not(:disabled) {
+  .landing__cta:active {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0 var(--c-text);
-  }
-  
-  .landing__cta:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
   
   .landing__how-it-works {
@@ -281,4 +255,4 @@
       gap: 3rem;
     }
   }
-</style>
+003c/style>

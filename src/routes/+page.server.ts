@@ -54,7 +54,8 @@ export const actions: Actions = {
     
     if (roomError || !room) {
       console.error('Room creation error:', roomError);
-      return fail(500, { error: 'Failed to create room. Please try again.', playerName });
+      const errorMsg = roomError?.message || 'Failed to create room. Please try again.';
+      return fail(500, { error: `Room error: ${errorMsg}`, playerName });
     }
     
     // Generate session ID
@@ -73,7 +74,8 @@ export const actions: Actions = {
     
     if (playerError || !player) {
       console.error('Player creation error:', playerError);
-      return fail(500, { error: 'Failed to create player. Please try again.', playerName });
+      const errorMsg = playerError?.message || 'Failed to create player. Please try again.';
+      return fail(500, { error: `Player error: ${errorMsg}`, playerName });
     }
     
     // Create games for this room

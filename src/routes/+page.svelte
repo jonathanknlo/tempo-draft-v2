@@ -1,6 +1,10 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { Flame } from 'lucide-svelte';
+  import { writable } from 'svelte/store';
+  
+  let error = writable('');
+  let loading = writable(false);
 </script>
 
 <svelte:head>
@@ -23,7 +27,25 @@
       </p>
     </div>
     
-    <form class="landing__form" method="POST" action="?/createRoom" use:enhance>
+    <form 
+      class="landing__form" 
+      method="POST" 
+      action="?/createRoom" 
+      use:enhance={() => {
+        $loading = true;
+        $error = '';
+        
+        return async ({ result, update }) => {
+          $loading = false;
+          
+          if (result.type === 'failure') {
+            $error = result.data?.error || 'Something went wrong. Please try again.';
+          } else if (result.type === 'success') {
+            await update();
+          }
+        };
+      }}
+    >
       <div class="landing__input-group">
         <label for="playerName" class="landing__label">Enter your name to start</label>
         <input
@@ -34,11 +56,18 @@
           maxlength="30"
           required
           class="landing__input"
+          disabled={$loading}
         />
       </div>
       
-      <button type="submit" class="landing__cta">
-        CREATE DRAFT ROOM
+      {#if $error}
+        <div class="error-message">
+          {$error}
+        </div>
+      {/if}
+      
+      <button type="submit" class="landing__cta" disabled={$loading}>
+        {$loading ? 'CREATING...' : 'CREATE DRAFT ROOM'}
       </button>
     </form>
     
@@ -122,7 +151,7 @@
   }
   
   .landing__input-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
   }
   
   .landing__label {
@@ -150,6 +179,20 @@
     box-shadow: inset 0 0 0 2px var(--c-accent);
   }
   
+  .landing__input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .error-message {
+    background: #ff4444;
+    color: white;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 3px solid var(--c-text);
+    font-weight: 600;
+  }
+  
   .landing__cta {
     width: 100%;
     padding: 1.25rem 2rem;
@@ -165,14 +208,19 @@
     transition: all var(--t-fast);
   }
   
-  .landing__cta:hover {
+  .landing__cta:hover:not(:disabled) {
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0 var(--c-text);
   }
   
-  .landing__cta:active {
+  .landing__cta:active:not(:disabled) {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0 var(--c-text);
+  }
+  
+  .landing__cta:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
   
   .landing__how-it-works {

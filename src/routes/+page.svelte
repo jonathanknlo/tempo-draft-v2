@@ -29,6 +29,7 @@
       class="landing__form" 
       method="POST" 
       action="?/createRoom"
+      data-version="2.1-fixed"
     >
       <div class="landing__input-group">
         <label for="playerName" class="landing__label">Enter your name to start</label>

@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 // Hardcoded for demo - in production use environment variables
-// Updated: 2026-02-13 - Key verified working
+// Updated: 2026-02-13 18:45 UTC - Key verified working, Vercel auto-deploy enabled
 const supabaseUrl = 'https://ovudfkhhzosgsmimhrdc.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92dWRma2hoem9zZ3NtaW1ocmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MTg0MzgsImV4cCI6MjA4NjM5NDQzOH0.D2ZadxbFDTB3Sr0dl1NF5lmS8UBgou77E7VQawfJdbg';
 

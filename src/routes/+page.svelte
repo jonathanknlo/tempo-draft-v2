@@ -51,6 +51,12 @@
         </div>
       {/if}
       
+      {#if form?.success}
+        <div style="background: #44ff44; color: black; padding: 0.75rem; margin-bottom: 1rem; border: 3px solid var(--c-text); font-weight: 600;">
+          Room created! Code: {form.roomCode}
+        </div>
+      {/if}
+      
       <button type="submit" class="landing__cta">
         CREATE DRAFT ROOM
       </button>

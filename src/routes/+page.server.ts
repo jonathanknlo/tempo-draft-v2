@@ -2,7 +2,7 @@ import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
 import { seasonGames } from '$lib/data/games';
-import { redirect, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
   createRoom: async ({ request, cookies }) => {
@@ -91,17 +91,14 @@ export const actions: Actions = {
         path: '/',
         httpOnly: true,
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7 // 7 days
+        maxAge: 60 * 60 * 24 * 7
       });
       
-      // Redirect to draft room
-      throw redirect(303, `/draft/${code}`);
+      // Return success (no redirect yet)
+      return { success: true, roomCode: code };
       
-    } catch (error) {
-      if (error instanceof Response && error.status === 303) {
-        throw error;
-      }
-      return fail(500, { error: 'An unexpected error occurred. Please try again.', playerName: '' });
+    } catch (e) {
+      return fail(500, { error: String(e), playerName: '' });
     }
   }
 };

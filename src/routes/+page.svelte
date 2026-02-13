@@ -51,6 +51,12 @@
         </div>
       {/if}
       
+      {#if form?.success}
+        <div class="success-message">
+          Room created! Code: {form.roomCode}
+        </div>
+      {/if}
+      
       <button type="submit" class="landing__cta">
         CREATE DRAFT ROOM
       </button>
@@ -167,6 +173,15 @@
   .error-message {
     background: #ff4444;
     color: white;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 3px solid var(--c-text);
+    font-weight: 600;
+  }
+  
+  .success-message {
+    background: #44ff44;
+    color: black;
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
     border: 3px solid var(--c-text);

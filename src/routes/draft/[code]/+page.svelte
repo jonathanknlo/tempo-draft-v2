@@ -75,7 +75,18 @@
     }));
   }
   
-  onMount(() => {
+  onMount(async () => {
+    // Check who the current user is (based on httpOnly cookie)
+    try {
+      const res = await fetch(`/api/room/${room.code}/me`);
+      const { myPlayer: currentPlayer } = await res.json();
+      if (currentPlayer) {
+        myPlayerStore.set(currentPlayer);
+      }
+    } catch (e) {
+      console.error('Failed to get current player:', e);
+    }
+    
     // Set up realtime subscriptions
     if (room) {
       // Subscribe to room changes

@@ -2,10 +2,18 @@ import type { PageServerLoad } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { error } from '@sveltejs/kit';
 
-// Ensure dynamic rendering - no caching at edge
+// Disable prerendering and edge caching
 export const prerender = false;
 
-export const load: PageServerLoad = async ({ params, cookies }) => {
+export const load: PageServerLoad = async ({ params, setHeaders }) => {
+  // Prevent all caching
+  setHeaders({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+  });
+  
   const { code } = params;
   
   // Get room
@@ -45,16 +53,14 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     .eq('room_id', room.id)
     .order('pick_number', { ascending: true });
   
-  // Check if user has existing session
-  const sessionId = cookies.get(`tempo-${room.id}`);
-  const myPlayer = players?.find(p => p.session_id === sessionId) || null;
-  
+  // Return data WITHOUT myPlayer - will be determined client-side
   return {
     room,
     players: players || [],
     games: games || [],
     picks: picks || [],
-    myPlayer,
-    isHost: myPlayer !== null && players !== null && players[0]?.id === myPlayer.id
+    // Don't determine myPlayer server-side - do it client-side to avoid caching issues
+    myPlayer: null,
+    isHost: false
   };
 };

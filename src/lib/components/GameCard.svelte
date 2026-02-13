@@ -9,6 +9,7 @@
   export let onSelect: (game: Game) => void = () => {};
   
   $: formattedDate = new Date(game.game_date).toLocaleDateString('en-US', {
+    weekday: 'short',
     month: 'short',
     day: 'numeric'
   });

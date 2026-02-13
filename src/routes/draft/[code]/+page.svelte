@@ -272,9 +272,20 @@
   }
   
   async function makePick(game: Game) {
-    if (!room || !myPlayer) return;
+    console.log('[MAKE PICK] Attempting to pick:', game.opponent, 'myPlayer:', myPlayer?.name, 'isMyTurn:', $draftStore.isMyTurn);
+    
+    if (!room || !myPlayer) {
+      console.error('[MAKE PICK] Cannot pick - room or myPlayer is null');
+      return;
+    }
+    
+    if (!$draftStore.isMyTurn) {
+      console.error('[MAKE PICK] Cannot pick - not your turn');
+      return;
+    }
     
     const pickNumber = picks.filter(p => p.undone_at === null).length + 1;
+    console.log('[MAKE PICK] Pick number:', pickNumber);
     
     const { data: pick, error } = await supabase
       .from('picks')
@@ -288,9 +299,11 @@
       .single();
     
     if (error) {
-      console.error('Pick error:', error);
+      console.error('[MAKE PICK] Error:', error);
       return;
     }
+    
+    console.log('[MAKE PICK] Success:', pick);
     
     // Show undo toast
     draftStore.update(s => ({ ...s, lastPickId: pick.id }));

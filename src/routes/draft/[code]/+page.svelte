@@ -45,6 +45,9 @@
   $: games = $draftStore.games;
   $: picks = $draftStore.picks;
   
+  // Determine if current user is the host (first player who joined)
+  $: isHost = myPlayer && players.length > 0 && players[0]?.id === myPlayer.id;
+  
   // Compute game ownership
   $: {
     const validPicks = picks.filter(p => p.undone_at === null);
@@ -356,7 +359,7 @@
             👤 {opponent.name}
           </div>
           
-          {#if data.isHost}
+          {#if isHost}
             <button class="btn btn--primary btn--large" on:click={startCoinToss}>
               START DRAFT
             </button>

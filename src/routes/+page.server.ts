@@ -1,8 +1,6 @@
 import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
-import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
-import { validatePlayerName } from '$lib/utils/validation';
-import { redirect, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
   createRoom: async ({ request }) => {
@@ -10,35 +8,13 @@ export const actions: Actions = {
       const formData = await request.formData();
       const playerName = formData.get('playerName') as string;
       
-      // Validate player name
-      const validation = validatePlayerName(playerName);
-      if (!validation.valid) {
-        return fail(400, { error: validation.error, playerName });
+      if (!playerName || !playerName.trim()) {
+        return fail(400, { error: 'Name is required', playerName });
       }
       
-      // Generate unique room code
-      let code = generateRoomCode();
-      let attempts = 0;
-      let existingRoom = null;
-      
-      do {
-        const { data } = await supabaseServer
-          .from('rooms')
-          .select('id')
-          .eq('code', code)
-          .single();
-        
-        existingRoom = data;
-        if (existingRoom) code = generateRoomCode();
-        attempts++;
-      } while (existingRoom && attempts < 3);
-      
-      if (existingRoom) {
-        return fail(500, { error: 'Failed to create room. Please try again.', playerName });
-      }
-      
-      // Create room
-      const { data: room, error: roomError } = await supabaseServer
+      // Simple room creation
+      const code = 'TEST' + Math.floor(Math.random() * 10000);
+      const { error } = await supabaseServer
         .from('rooms')
         .insert({
           code,
@@ -47,26 +23,16 @@ export const actions: Actions = {
           current_pick: 0,
           total_picks: 18,
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
-        })
-        .select()
-        .single();
+        });
       
-      if (roomError || !room) {
-        return fail(500, { error: 'Failed to create room. Please try again.', playerName });
+      if (error) {
+        return fail(500, { error: error.message, playerName });
       }
       
-      // Generate session ID (but don't create player yet)
-      const sessionId = generateSessionId();
-      console.log('Session ID generated:', sessionId);
+      return { success: true, roomCode: code };
       
-      // Redirect to draft room
-      throw redirect(303, `/draft/${code}`);
-      
-    } catch (error) {
-      if (error instanceof Response && error.status === 303) {
-        throw error;
-      }
-      return fail(500, { error: 'An unexpected error occurred. Please try again.', playerName: '' });
+    } catch (e) {
+      return fail(500, { error: String(e), playerName: '' });
     }
   }
 };

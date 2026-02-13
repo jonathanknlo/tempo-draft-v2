@@ -7,13 +7,10 @@ export const roomError = writable<string | null>(null);
 
 // Players state
 export const playersStore = writable<Player[]>([]);
-export const myPlayerStore = derived(
-  playersStore,
-  ($players) => $players.find((p) => p.session_id !== null)
-);
+export const myPlayerStore = writable<Player | null>(null);
 export const opponentStore = derived(
-  playersStore,
-  ($players) => $players.find((p) => p.session_id === null || !p.session_id)
+  [playersStore, myPlayerStore],
+  ([$players, $myPlayer]) => $players.find((p) => p.id !== $myPlayer?.id)
 );
 
 // Draft state

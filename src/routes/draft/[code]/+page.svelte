@@ -78,13 +78,19 @@
   onMount(async () => {
     // Check who the current user is (based on httpOnly cookie)
     try {
+      console.log('[CLIENT] Fetching current player...');
       const res = await fetch(`/api/room/${room.code}/me`);
-      const { myPlayer: currentPlayer } = await res.json();
-      if (currentPlayer) {
-        myPlayerStore.set(currentPlayer);
+      console.log('[CLIENT] Response status:', res.status);
+      const data = await res.json();
+      console.log('[CLIENT] Player data:', data);
+      if (data.myPlayer) {
+        console.log('[CLIENT] Setting myPlayer:', data.myPlayer.name);
+        myPlayerStore.set(data.myPlayer);
+      } else {
+        console.log('[CLIENT] No player found - user needs to join');
       }
     } catch (e) {
-      console.error('Failed to get current player:', e);
+      console.error('[CLIENT] Failed to get current player:', e);
     }
     
     // Set up realtime subscriptions

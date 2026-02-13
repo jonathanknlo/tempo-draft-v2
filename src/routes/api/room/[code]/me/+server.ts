@@ -1,7 +1,15 @@
 import type { RequestHandler } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 
-export const GET: RequestHandler = async ({ params, cookies }) => {
+export const prerender = false;
+
+export const GET: RequestHandler = async ({ params, cookies, setHeaders }) => {
+  // Prevent caching
+  setHeaders({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache'
+  });
+  
   const { code } = params;
   
   // Get room

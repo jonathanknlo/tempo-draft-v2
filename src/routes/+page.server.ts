@@ -2,10 +2,10 @@ import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
 import { seasonGames } from '$lib/data/games';
-import { fail } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
-  createRoom: async ({ request }) => {
+  createRoom: async ({ request, cookies }) => {
     try {
       const formData = await request.formData();
       const playerName = formData.get('playerName') as string;
@@ -84,18 +84,24 @@ export const actions: Actions = {
         is_family: game.gameTime < '18:00'
       }));
       
-      const { error: gamesError } = await supabaseServer
-        .from('games')
-        .insert(gamesToInsert);
+      await supabaseServer.from('games').insert(gamesToInsert);
       
-      if (gamesError) {
-        console.log('Games creation error (non-fatal):', gamesError);
+      // Set session cookie
+      cookies.set(`tempo-${room.id}`, sessionId, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7 // 7 days
+      });
+      
+      // Redirect to draft room
+      throw redirect(303, `/draft/${code}`);
+      
+    } catch (error) {
+      if (error instanceof Response && error.status === 303) {
+        throw error;
       }
-      
-      return { success: true, roomCode: code };
-      
-    } catch (e) {
-      return fail(500, { error: String(e), playerName: '' });
+      return fail(500, { error: 'An unexpected error occurred. Please try again.', playerName: '' });
     }
   }
 };

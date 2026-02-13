@@ -77,9 +77,13 @@
   
   onMount(async () => {
     // Check who the current user is (based on httpOnly cookie)
+    // Use cache-busting to ensure fresh response
     try {
       console.log('[CLIENT] Fetching current player...');
-      const res = await fetch(`/api/room/${room.code}/me`);
+      const res = await fetch(`/api/room/${room.code}/me?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       console.log('[CLIENT] Response status:', res.status);
       const data = await res.json();
       console.log('[CLIENT] Player data:', data);
@@ -88,9 +92,11 @@
         myPlayerStore.set(data.myPlayer);
       } else {
         console.log('[CLIENT] No player found - user needs to join');
+        myPlayerStore.set(null);
       }
     } catch (e) {
       console.error('[CLIENT] Failed to get current player:', e);
+      myPlayerStore.set(null);
     }
     
     // Set up realtime subscriptions

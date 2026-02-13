@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
+  import { get } from 'svelte/store';
   import { supabase } from '$lib/supabase/client';
   import { roomStore, playersStore, draftStore, uiStore, myPlayerStore, opponentStore } from '$lib/stores/draft';
   import { getCurrentTurnPlayerId, generateSessionId } from '$lib/utils/draft-logic';
@@ -214,20 +215,34 @@
   async function startCoinToss() {
     if (!room || players.length < 2) return;
     
+    console.log('[START DRAFT] Starting coin toss...');
+    
     // Update room status
-    await supabase
+    const { error } = await supabase
       .from('rooms')
       .update({ status: 'coin_toss' })
       .eq('id', room.id);
+    
+    if (error) {
+      console.error('[START DRAFT] Error updating room:', error);
+      return;
+    }
+    
+    console.log('[START DRAFT] Room status updated to coin_toss');
     
     // Animate coin toss
     uiStore.update(s => ({ ...s, isCoinTossing: true }));
     
     // Determine winner randomly
     setTimeout(async () => {
+      const currentPlayers = get(playersStore);
+      if (currentPlayers.length < 2) return;
+      
       const winnerIndex = Math.random() < 0.5 ? 0 : 1;
-      const winner = players[winnerIndex];
-      const loser = players[1 - winnerIndex];
+      const winner = currentPlayers[winnerIndex];
+      const loser = currentPlayers[1 - winnerIndex];
+      
+      console.log('[START DRAFT] Winner:', winner.name, 'Loser:', loser.name);
       
       // Update players
       await supabase
@@ -243,10 +258,10 @@
       // Update room to drafting status
       await supabase
         .from('rooms')
-        .update({
-          status: 'drafting'
-        })
+        .update({ status: 'drafting' })
         .eq('id', room.id);
+      
+      console.log('[START DRAFT] Room status updated to drafting');
       
       uiStore.update(s => ({
         ...s,

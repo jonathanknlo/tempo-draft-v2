@@ -293,6 +293,7 @@
         room_id: room.id,
         game_id: game.id,
         player_id: myPlayer.id,
+        player: myPlayer.id, // Fix: DB expects 'player' column based on error
         pick_number: pickNumber
       })
       .select()

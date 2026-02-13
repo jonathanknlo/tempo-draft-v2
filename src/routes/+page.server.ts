@@ -1,5 +1,6 @@
 import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
+import { generateRoomCode } from '$lib/utils/draft-logic';
 import { fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -12,8 +13,36 @@ export const actions: Actions = {
         return fail(400, { error: 'Name is required', playerName });
       }
       
-      // Simple room creation
-      const code = 'TEST' + Math.floor(Math.random() * 10000);
+      // Generate unique room code (with collision handling)
+      let code = generateRoomCode();
+      let attempts = 0;
+      let existingRoom = null;
+      
+      do {
+        const { data, error } = await supabaseServer
+          .from('rooms')
+          .select('id')
+          .eq('code', code)
+          .single();
+        
+        // PGRST116 = no rows returned (good - code is unique)
+        if (error && error.code === 'PGRST116') {
+          existingRoom = null;
+        } else {
+          existingRoom = data;
+        }
+        
+        if (existingRoom) {
+          code = generateRoomCode();
+        }
+        attempts++;
+      } while (existingRoom && attempts < 3);
+      
+      if (existingRoom) {
+        return fail(500, { error: 'Failed to generate unique code', playerName });
+      }
+      
+      // Create room
       const { error } = await supabaseServer
         .from('rooms')
         .insert({

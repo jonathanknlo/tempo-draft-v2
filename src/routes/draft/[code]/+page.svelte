@@ -198,6 +198,9 @@
     // Update store
     playersStore.update(p => [...p, newPlayer]);
     
+    // Set myPlayerStore so UI updates immediately
+    myPlayerStore.set(newPlayer);
+    
     // Set cookie via API
     await fetch('/api/session', {
       method: 'POST',

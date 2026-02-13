@@ -1,6 +1,7 @@
 import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
+import { seasonGames } from '$lib/data/games';
 import { fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -68,9 +69,27 @@ export const actions: Actions = {
         });
       
       if (playerError) {
-        // Clean up room
         await supabaseServer.from('rooms').delete().eq('id', room.id);
         return fail(500, { error: playerError.message, playerName });
+      }
+      
+      // Create games
+      const gamesToInsert = seasonGames.map((game) => ({
+        room_id: room.id,
+        opponent: game.opponent,
+        venue: game.venue,
+        game_date: game.gameDate,
+        game_time: game.gameTime,
+        is_marquee: game.isMarquee,
+        is_family: game.gameTime < '18:00'
+      }));
+      
+      const { error: gamesError } = await supabaseServer
+        .from('games')
+        .insert(gamesToInsert);
+      
+      if (gamesError) {
+        console.log('Games creation error (non-fatal):', gamesError);
       }
       
       return { success: true, roomCode: code };

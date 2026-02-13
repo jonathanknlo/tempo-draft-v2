@@ -2,13 +2,10 @@ import type { PageServerLoad } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params, cookies, setHeaders }) => {
-  // Prevent CDN caching - each user should get their own session
-  setHeaders({
-    'Cache-Control': 'private, no-store, no-cache, must-revalidate',
-    'Vary': 'Cookie'
-  });
-  
+// Ensure dynamic rendering - no caching at edge
+export const prerender = false;
+
+export const load: PageServerLoad = async ({ params, cookies }) => {
   const { code } = params;
   
   // Get room

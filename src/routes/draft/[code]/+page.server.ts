@@ -2,7 +2,13 @@ import type { PageServerLoad } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { error } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ params, cookies }) => {
+export const load: PageServerLoad = async ({ params, cookies, setHeaders }) => {
+  // Prevent CDN caching - each user should get their own session
+  setHeaders({
+    'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+    'Vary': 'Cookie'
+  });
+  
   const { code } = params;
   
   // Get room
@@ -16,7 +22,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     throw error(404, 'Room not found');
   }
   
-  // Check if room expired (1 hour - CRITICAL FIX #1)
+  // Check if room expired
   const expiresAt = new Date(room.expires_at);
   if (expiresAt < new Date()) {
     throw error(410, 'This draft room has expired');

@@ -2,11 +2,10 @@ import type { Actions } from './$types';
 import { supabaseServer } from '$lib/supabase/server';
 import { generateRoomCode, generateSessionId } from '$lib/utils/draft-logic';
 import { validatePlayerName } from '$lib/utils/validation';
-import { seasonGames } from '$lib/data/games';
 import { redirect, fail } from '@sveltejs/kit';
 
 export const actions: Actions = {
-  createRoom: async ({ request, cookies }) => {
+  createRoom: async ({ request }) => {
     try {
       const formData = await request.formData();
       const playerName = formData.get('playerName') as string;
@@ -56,45 +55,9 @@ export const actions: Actions = {
         return fail(500, { error: 'Failed to create room. Please try again.', playerName });
       }
       
-      // Generate session ID
+      // Generate session ID (but don't create player yet)
       const sessionId = generateSessionId();
-      
-      // Create player (host)
-      const { data: player, error: playerError } = await supabaseServer
-        .from('players')
-        .insert({
-          room_id: room.id,
-          name: playerName.trim(),
-          session_id: sessionId
-        })
-        .select()
-        .single();
-      
-      if (playerError || !player) {
-        await supabaseServer.from('rooms').delete().eq('id', room.id);
-        return fail(500, { error: 'Failed to create player. Please try again.', playerName });
-      }
-      
-      // Create games
-      const gamesToInsert = seasonGames.map((game) => ({
-        room_id: room.id,
-        opponent: game.opponent,
-        venue: game.venue,
-        game_date: game.gameDate,
-        game_time: game.gameTime,
-        is_marquee: game.isMarquee,
-        is_family: game.gameTime < '18:00'
-      }));
-      
-      await supabaseServer.from('games').insert(gamesToInsert);
-      
-      // Set session cookie
-      cookies.set(`tempo-${room.id}`, sessionId, {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7
-      });
+      console.log('Session ID generated:', sessionId);
       
       // Redirect to draft room
       throw redirect(303, `/draft/${code}`);

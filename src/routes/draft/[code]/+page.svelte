@@ -66,11 +66,21 @@
     const availableGames = games.filter(g => !myGameIds.includes(g.id) && !opponentGameIds.includes(g.id));
     
     // Determine whose turn
-    const firstPicker = players.find(p => p.is_first_picker);
+    // Fallback: if is_first_picker not set, use first player in array as first picker
+    let firstPicker = players.find(p => p.is_first_picker);
+    if (!firstPicker && players.length > 0) {
+      firstPicker = players[0];
+    }
+    
     const currentTurnId = firstPicker 
       ? getCurrentTurnPlayerId(picks, players, firstPicker.id)
       : null;
     const isMyTurn = myPlayer ? currentTurnId === myPlayer.id : false;
+    
+    // Debug logging for last pick issues
+    if (validPicks.length >= 16) {
+      console.log('[TURN DEBUG] validPicks:', validPicks.length, 'firstPicker:', firstPicker?.name, 'currentTurnId:', currentTurnId, 'isMyTurn:', isMyTurn);
+    }
     
     draftStore.update(s => ({
       ...s,
@@ -343,6 +353,15 @@
     }
     
     console.log('[MAKE PICK] Success:', pick);
+    
+    // Check if this was the last pick (18th)
+    if (pickNumber >= 18) {
+      console.log('[MAKE PICK] Final pick made! Completing draft...');
+      await supabase
+        .from('rooms')
+        .update({ status: 'complete', completed_at: new Date().toISOString() })
+        .eq('id', room.id);
+    }
     
     // Show undo toast
     draftStore.update(s => ({ ...s, lastPickId: pick.id }));

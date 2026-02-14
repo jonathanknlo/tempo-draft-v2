@@ -8,13 +8,13 @@
   - generic [ref=e9]:
     - generic [ref=e10]:
       - heading "DRAFT LOBBY" [level=1] [ref=e11]
-      - paragraph [ref=e12]: "Room code: MPLYG9"
+      - paragraph [ref=e12]: "Room code: Q6P8J8"
     - generic [ref=e13]:
-      - generic [ref=e14]: 👤 TestHost (You)
+      - generic [ref=e14]: 👤 Host (You)
       - generic [ref=e15]: ⭕ Waiting for Player 2...
     - generic [ref=e16]:
       - heading "SHARE THIS LINK" [level=3] [ref=e17]
-      - textbox [ref=e19]: https://tempo-draft-v2.vercel.app/draft/MPLYG9
+      - textbox [ref=e19]: https://tempo-draft-v2.vercel.app/draft/Q6P8J8
       - generic [ref=e20]:
         - button "COPY" [ref=e21] [cursor=pointer]:
           - img [ref=e22]

@@ -112,10 +112,13 @@
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${room.id}` },
           (payload) => {
+            console.log('[REALTIME] Room updated:', payload);
             roomStore.set(payload.new as typeof room);
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('[REALTIME] Room channel status:', status);
+        });
       
       // Subscribe to player changes
       const playersChannel = supabase
@@ -123,17 +126,21 @@
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${room.id}` },
-          async () => {
+          async (payload) => {
+            console.log('[REALTIME] Player change detected:', payload);
             const { data: updatedPlayers } = await supabase
               .from('players')
               .select('*')
               .eq('room_id', room.id);
             if (updatedPlayers) {
+              console.log('[REALTIME] Updated players list:', updatedPlayers.length);
               playersStore.set(updatedPlayers);
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('[REALTIME] Players channel status:', status);
+        });
       
       // Subscribe to picks
       const picksChannel = supabase
@@ -287,13 +294,22 @@
     const pickNumber = picks.filter(p => p.undone_at === null).length + 1;
     console.log('[MAKE PICK] Pick number:', pickNumber);
     
+    // Determine player role (p1 or p2) based on room data
+    // Assuming players[0] is always p1 (host) and players[1] is p2
+    // A more robust check would use room.player1_name/id if available, but checking players array order is consistent with startCoinToss logic
+    const currentPlayers = get(playersStore);
+    const isPlayer1 = myPlayer.id === currentPlayers[0]?.id;
+    const playerRole = isPlayer1 ? 'p1' : 'p2';
+    
+    console.log('[MAKE PICK] Player role:', playerRole);
+    
     const { data: pick, error } = await supabase
       .from('picks')
       .insert({
         room_id: room.id,
         game_id: game.id,
         player_id: myPlayer.id,
-        player: myPlayer.id, // Fix: DB expects 'player' column based on error
+        player: playerRole, // Fix: DB expects 'p1' or 'p2' due to check constraint
         pick_number: pickNumber
       })
       .select()

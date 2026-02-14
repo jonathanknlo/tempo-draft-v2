@@ -4,6 +4,7 @@
   import { get } from 'svelte/store';
   import { supabase } from '$lib/supabase/client';
   import { roomStore, playersStore, draftStore, uiStore, myPlayerStore, opponentStore } from '$lib/stores/draft';
+  import { notificationStore } from '$lib/stores/notification';
   import { getCurrentTurnPlayerId, generateSessionId } from '$lib/utils/draft-logic';
   import { generateICS, downloadICS } from '$lib/utils/ics-export';
   import TurnIndicator from '$lib/components/TurnIndicator.svelte';
@@ -12,6 +13,7 @@
   import CoinToss from '$lib/components/CoinToss.svelte';
   import ShareLink from '$lib/components/ShareLink.svelte';
   import UndoToast from '$lib/components/UndoToast.svelte';
+  import NotificationToast from '$lib/components/NotificationToast.svelte';
   import type { Game, Pick, Player } from '$lib/supabase/types';
   import type { PageData } from './$types';
   
@@ -156,7 +158,7 @@
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'picks', filter: `room_id=eq.${room.id}` },
-          async () => {
+          async (payload) => {
             const { data: updatedPicks } = await supabase
               .from('picks')
               .select('*')
@@ -164,6 +166,18 @@
               .order('pick_number', { ascending: true });
             if (updatedPicks) {
               draftStore.update(s => ({ ...s, picks: updatedPicks }));
+              
+              // Check if this is a new pick from opponent
+              if (payload.eventType === 'INSERT') {
+                const newPick = payload.new as Pick;
+                if (newPick.player_id !== myPlayer?.id && !newPick.undone_at) {
+                  // Show notification that opponent made a pick
+                  notificationStore.show({
+                    type: 'opponent-pick',
+                    message: `${opponent?.name || 'Your opponent'} picked a game! Your turn.`
+                  });
+                }
+              }
               
               // Hide undo toast if opponent made a pick
               const lastPick = updatedPicks[updatedPicks.length - 1];
@@ -508,6 +522,9 @@
       timeLeft={5}
       on:undo={undoPick}
     />
+    
+    <!-- Notification Toast - always available -->
+    <NotificationToast />
     
   {:else if room?.status === 'complete'}
     <!-- Results -->

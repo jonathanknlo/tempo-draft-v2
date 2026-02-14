@@ -105,6 +105,18 @@
     
     // Set up realtime subscriptions
     if (room) {
+      uiStore.update(s => ({ ...s, connectionStatus: 'connecting' }));
+      
+      const handleStatus = (status: string, channelName: string) => {
+        console.log(`[REALTIME] ${channelName} status:`, status);
+        if (status === 'SUBSCRIBED') {
+          uiStore.update(s => ({ ...s, connectionStatus: 'connected' }));
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          uiStore.update(s => ({ ...s, connectionStatus: 'disconnected' }));
+          console.error(`[REALTIME] Error on ${channelName}`);
+        }
+      };
+
       // Subscribe to room changes
       const roomChannel = supabase
         .channel(`room:${room.id}`)
@@ -116,9 +128,7 @@
             roomStore.set(payload.new as typeof room);
           }
         )
-        .subscribe((status) => {
-          console.log('[REALTIME] Room channel status:', status);
-        });
+        .subscribe((status) => handleStatus(status, 'ROOM'));
       
       // Subscribe to player changes
       const playersChannel = supabase
@@ -138,9 +148,7 @@
             }
           }
         )
-        .subscribe((status) => {
-          console.log('[REALTIME] Players channel status:', status);
-        });
+        .subscribe((status) => handleStatus(status, 'PLAYERS'));
       
       // Subscribe to picks
       const picksChannel = supabase
@@ -166,7 +174,7 @@
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => handleStatus(status, 'PICKS'));
       
       subscriptions = [
         () => roomChannel.unsubscribe(),
@@ -355,6 +363,23 @@
   function newDraft() {
     window.location.href = '/';
   }
+  
+  async function forceRefresh() {
+    if (!room) return;
+    console.log('[MANUAL] Force refreshing data...');
+    
+    // Refresh room
+    const { data: updatedRoom } = await supabase.from('rooms').select('*').eq('id', room.id).single();
+    if (updatedRoom) roomStore.set(updatedRoom);
+    
+    // Refresh players
+    const { data: updatedPlayers } = await supabase.from('players').select('*').eq('room_id', room.id);
+    if (updatedPlayers) playersStore.set(updatedPlayers);
+    
+    // Refresh picks
+    const { data: updatedPicks } = await supabase.from('picks').select('*').eq('room_id', room.id).order('pick_number', { ascending: true });
+    if (updatedPicks) draftStore.update(s => ({ ...s, picks: updatedPicks }));
+  }
 </script>
 
 <svelte:head>
@@ -362,6 +387,12 @@
 </svelte:head>
 
 <div class="draft-page">
+  <div class="connection-status" class:disconnected={$uiStore.connectionStatus !== 'connected'}>
+    <span class="status-dot"></span>
+    <span class="status-text">{$uiStore.connectionStatus === 'connected' ? 'LIVE' : 'OFFLINE'}</span>
+    <button class="refresh-btn" on:click={forceRefresh} title="Sync Data">↻</button>
+  </div>
+
   {#if !myPlayer}
     <!-- Join Form -->
     <div class="modal-overlay">
@@ -537,6 +568,54 @@
     .draft-page {
       padding: 2rem;
     }
+  }
+  
+  .connection-status {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 2px solid var(--c-text);
+    padding: 0.25rem 0.5rem;
+    font-family: var(--f-mono);
+    font-size: 0.75rem;
+    z-index: 1000;
+    box-shadow: 2px 2px 0 var(--c-text);
+  }
+  
+  .connection-status.disconnected {
+    border-color: #ff4444;
+    color: #ff4444;
+  }
+  
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #00C853;
+    border-radius: 50%;
+  }
+  
+  .connection-status.disconnected .status-dot {
+    background: #ff4444;
+    animation: pulse 1s infinite;
+  }
+  
+  .refresh-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.25rem;
+    margin-left: 0.25rem;
+    border-left: 1px solid #ccc;
+  }
+  
+  .refresh-btn:hover {
+    transform: rotate(180deg);
+    transition: transform 0.3s;
   }
   
   /* Modal */
